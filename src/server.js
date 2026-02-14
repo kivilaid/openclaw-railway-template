@@ -103,17 +103,6 @@ function isConfigured() {
   }
 }
 
-function getHooksPath() {
-  try {
-    const raw = fs.readFileSync(configPath(), "utf8");
-    const config = JSON.parse(raw);
-    if (config.hooks?.enabled && config.hooks?.path) {
-      return config.hooks.path;
-    }
-  } catch {}
-  return null;
-}
-
 let gatewayProc = null;
 let gatewayStarting = null;
 let shuttingDown = false;
@@ -980,22 +969,12 @@ proxy.on("proxyReqWs", (proxyReq, req, socket, options, head) => {
 });
 
 app.use(async (req, res) => {
-  const hooksPath = getHooksPath();
-  const isHooksRequest = hooksPath && req.path.startsWith(hooksPath);
-
   if (!isConfigured() && !req.path.startsWith("/setup")) {
-    if (isHooksRequest) {
-      return proxy.web(req, res, { target: GATEWAY_TARGET });
-    }
     return res.redirect("/setup");
   }
 
   if (isConfigured()) {
     if (!isGatewayReady()) {
-      if (isHooksRequest) {
-        return res.status(503).json({ error: "Gateway not ready" });
-      }
-
       try {
         await ensureGatewayRunning();
       } catch {
