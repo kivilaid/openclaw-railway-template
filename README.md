@@ -1,4 +1,4 @@
-# Moltbot Railway Template (1‑click deploy)
+# OpenClaw Railway Template (1‑click deploy)
 
 This repo packages **OpenClaw** for Railway with a comprehensive **/setup** web wizard so users can deploy and onboard **without running any commands**.
 
@@ -74,26 +74,33 @@ This pins your deployment to a known stable release, protecting you from upstrea
 ### Use Cases
 
 **Pin to Stable Release (Recommended)**
+
 ```
 OPENCLAW_VERSION=v2026.2.15
 ```
+
 Use when main branch is broken or to ensure consistent deployments.
 
 **Use Latest Main (Advanced)**
+
 ```
 (Leave OPENCLAW_VERSION unset)
 ```
+
 Automatically uses latest main branch. Good for testing but may break unexpectedly.
 
 **Test Specific Branch**
+
 ```
 OPENCLAW_VERSION=feature-branch-name
 ```
+
 Useful for testing unreleased features.
 
 ### Finding Available Versions
 
 List all OpenClaw releases:
+
 ```bash
 git ls-remote --tags https://github.com/openclaw/openclaw.git | grep -v '\^{}' | sed 's|.*refs/tags/||'
 ```
@@ -103,7 +110,9 @@ See **[OPENCLAW-VERSION-CONTROL.md](OPENCLAW-VERSION-CONTROL.md)** for detailed 
 ## New Features in This Fork
 
 ### Debug Console 🔧
+
 Run openclaw commands without SSH access:
+
 - **Gateway lifecycle:** restart, stop, start
 - **OpenClaw CLI:** version, status, health, doctor, logs
 - **Config inspection:** get any config value
@@ -112,6 +121,7 @@ Run openclaw commands without SSH access:
 - **Strict allowlist:** Only 13 safe commands permitted
 
 ### Config Editor ✏️
+
 - Edit `openclaw.json` directly in the browser
 - Automatic timestamped backups before each save (`.bak-YYYY-MM-DDTHH-MM-SS-SSSZ`)
 - Gateway auto-restart after changes
@@ -119,19 +129,23 @@ Run openclaw commands without SSH access:
 - 500KB safety limit with validation
 
 ### Pairing Helper 🔐
+
 - List pending device pairing requests
 - One-click approval via UI
 - No SSH required
 - Fixes "disconnected (1008): pairing required" errors
 
 ### Import/Export Backup 💾
+
 - **Export:** Download `.tar.gz` of config + workspace
 - **Import:** Restore from backup file (250MB max)
 - Path traversal protection
 - Perfect for migration or disaster recovery
 
 ### Custom Providers 🔌
+
 Add OpenAI-compatible providers during setup:
+
 - Ollama (local LLMs)
 - vLLM (high-performance serving)
 - LM Studio (desktop GUI)
@@ -139,6 +153,7 @@ Add OpenAI-compatible providers during setup:
 - Support for environment variable API keys
 
 ### Better Diagnostics 📊
+
 - Public `/healthz` endpoint (no auth required)
 - `/setup/api/debug` for comprehensive diagnostics
 - Automatic `openclaw doctor` on failures (5min rate limit)
@@ -146,12 +161,14 @@ Add OpenAI-compatible providers during setup:
 - TCP-based gateway health probes (more reliable)
 
 ### Smart Railway Integration 🚂
+
 - Auto-detects Railway environment via `RAILWAY_*` env vars
 - Configures trusted proxies automatically for correct client IPs
 - Secure localhost-only proxy trust (127.0.0.1)
 - Optional override with `OPENCLAW_TRUST_PROXY_ALL`
 
 ### Enhanced Reliability 🛡️
+
 - 60-second gateway readiness timeout (was 20s)
 - Background health monitoring with automatic diagnostics
 - Graceful shutdown handling (SIGTERM → SIGKILL escalation)
@@ -166,14 +183,16 @@ Add OpenAI-compatible providers during setup:
 2. Configure environment variables:
 
 **Required:**
+
 - `SETUP_PASSWORD` — Your chosen password for `/setup`
 
 **Recommended:**
+
 - `OPENCLAW_VERSION=v2026.2.15` — Pin to stable release
 - `OPENCLAW_STATE_DIR=/data/.openclaw`
 - `OPENCLAW_WORKSPACE_DIR=/data/workspace`
 
-3. Railway will automatically:
+1. Railway will automatically:
    - Create a volume at `/data`
    - Build from the Dockerfile
    - Enable public networking
@@ -188,6 +207,7 @@ Add OpenAI-compatible providers during setup:
 5. Deploy
 
 Then:
+
 - Visit `https://<your-app>.up.railway.app/setup` (password: your `SETUP_PASSWORD`)
 - Complete setup wizard
 - Visit `/openclaw` to start chatting
@@ -215,12 +235,14 @@ Then:
 ### "disconnected (1008): pairing required"
 
 **Solution 1: Use Pairing Helper (UI)**
+
 1. Visit `/setup`
 2. Scroll to "Pairing helper" section
 3. Click "Refresh pending devices"
 4. Click "Approve" for each device
 
 **Solution 2: Use Debug Console**
+
 1. Select `openclaw.devices.list`
 2. Note the requestId
 3. Select `openclaw.devices.approve`
@@ -234,6 +256,7 @@ Then:
 4. Check `/setup/api/debug` for full diagnostics
 
 **Common causes:**
+
 - Gateway not started (check `/healthz` → `gateway.processRunning`)
 - Volume not mounted at `/data`
 - Missing `OPENCLAW_STATE_DIR` or `OPENCLAW_WORKSPACE_DIR` variables
@@ -242,10 +265,12 @@ Then:
 
 1. Verify volume is mounted at `/data`
 2. Check environment variables:
+
    ```
    OPENCLAW_STATE_DIR=/data/.openclaw
    OPENCLAW_WORKSPACE_DIR=/data/workspace
    ```
+
 3. Run `openclaw doctor --fix` in Debug Console
 4. Check `/setup/api/debug` for detailed error info
 5. Verify credentials directory exists with 700 permissions
@@ -266,17 +291,21 @@ Then:
 ### Import backup fails
 
 **"File too large: X.XMB (max 250MB)"**
+
 - Reduce workspace files before exporting
 - Split large data into multiple imports
 
 **"Import requires both STATE_DIR and WORKSPACE_DIR under /data"**
+
 - Set in Railway Variables:
+
   ```
   OPENCLAW_STATE_DIR=/data/.openclaw
   OPENCLAW_WORKSPACE_DIR=/data/workspace
   ```
 
 **"Config file too large: X.XKB (max 500KB)"**
+
 - Config exceeds safety limit
 - Remove unnecessary data from config
 
@@ -333,9 +362,9 @@ docker build --build-arg OPENCLAW_VERSION=v2026.2.16 -t openclaw-test .
 
 ## Support & Community
 
-- **Report Issues**: https://github.com/codetitlan/moltbot-railway-template/issues
-- **Discord**: https://discord.com/invite/clawd
-- **OpenClaw Docs**: https://docs.openclaw.com
+- **Report Issues**: <https://github.com/codetitlan/openclaw-railway-template/issues>
+- **Discord**: <https://discord.com/invite/clawd>
+- **OpenClaw Docs**: <https://docs.openclaw.com>
 
 ## License
 

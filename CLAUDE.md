@@ -217,26 +217,30 @@ This project has been onboarded with **Serena** (semantic coding assistant via M
 
 This avoids repeatedly reading large files and provides instant context about the project.
 
-## New Features (Enhanced Moltbot - Days 1-7)
+## New Features (Enhanced OpenClaw - Days 1-7)
 
 ### Day 1: Health, Diagnostics & Gateway Lifecycle
 
 **Public Health Endpoint** (src/server.js:330-355)
+
 - `GET /healthz` - No auth required, returns gateway status
 - TCP-based gateway probe for reliable up/down detection
 - Returns: `{ok: true/false, gateway: {status, lastError, lastExit, lastDoctor}}`
 
 **Error Tracking** (src/server.js:140-144)
+
 - `lastGatewayError` - Last error from gateway process
 - `lastGatewayExit` - Last exit code and signal
 - `lastDoctorOutput` - Last `openclaw doctor` output
 
 **Auto Doctor** (src/server.js:218-231)
+
 - Runs `openclaw doctor` automatically on gateway failures
 - 5-minute rate limit to prevent spam
 - Output stored in `lastDoctorOutput` for diagnostics
 
 **Secret Redaction** (src/server.js:244-270)
+
 - `redactSecrets()` function redacts 5 token patterns
 - Applied to all debug console output
 - Protects API keys, tokens, and secrets
@@ -244,27 +248,32 @@ This avoids repeatedly reading large files and provides instant context about th
 ### Day 2: Environment Migration & Configuration
 
 **Environment Variable Migration** (src/server.js:11-32)
+
 - Auto-migrates `CLAWDBOT_*` → `OPENCLAW_*`
 - Auto-migrates `MOLTBOT_*` → `OPENCLAW_*`
 - Logs warnings for deprecated env vars
 
 **Legacy Config File Migration** (src/server.js:116-135)
+
 - Auto-renames `moltbot.json` → `openclaw.json`
 - Auto-renames `clawdbot.json` → `openclaw.json`
 - Atomic rename with existence checks
 
 **Enhanced runCmd** (src/server.js:173-216)
+
 - 120s default timeout (configurable)
 - SIGTERM → SIGKILL escalation
 - Returns exit code 124 for timeout (GNU timeout compatible)
 
 **Railway Proxy Trust** (src/server.js:751-754)
+
 - Sets `gateway.trustedProxies=["127.0.0.1"]`
 - Required for Railway reverse proxy
 
 ### Day 3: Debug Console (Backend & Frontend)
 
 **Allowlisted Command System** (src/server.js:1313-1442)
+
 - 13 commands in strict allowlist (Set-based)
 - Gateway lifecycle: restart, stop, start
 - OpenClaw CLI: version, status, health, doctor, logs --tail
@@ -273,12 +282,14 @@ This avoids repeatedly reading large files and provides instant context about th
 - Plugin management: list, enable with name regex
 
 **POST /setup/api/console/run** (src/server.js:1313-1442)
+
 - Validates command against allowlist
 - Executes via runCmd with timeout
 - Returns redacted output
 - Requires SETUP_PASSWORD auth
 
 **Enhanced /setup/api/debug** (src/server.js:1268-1311)
+
 - Channel diagnostics (Telegram/Discord status)
 - Plugin list
 - Auth groups
@@ -287,6 +298,7 @@ This avoids repeatedly reading large files and provides instant context about th
 ### Day 4: Config Editor & Pairing Helper
 
 **Config Editor** (src/server.js:1444-1528)
+
 - `GET /setup/api/config/raw` - Load config
 - `POST /setup/api/config/raw` - Save config
 - 500KB size limit (DoS prevention)
@@ -296,6 +308,7 @@ This avoids repeatedly reading large files and provides instant context about th
 - Auto-restart gateway after save
 
 **Device Pairing Helper** (src/server.js:1530-1601)
+
 - `GET /setup/api/devices/pending` - List pending devices
 - `POST /setup/api/devices/approve` - Approve device
 - Extracts requestIds from `openclaw devices list` output
@@ -305,6 +318,7 @@ This avoids repeatedly reading large files and provides instant context about th
 ### Day 5: Import Backup & Plugin Management
 
 **Backup Import** (src/server.js:1713-1831)
+
 - `POST /setup/import` - Import .tar.gz backup
 - 250MB max upload size
 - Path traversal prevention (`isUnderDir`, `looksSafeTarPath`)
@@ -313,11 +327,13 @@ This avoids repeatedly reading large files and provides instant context about th
 - Temp file cleanup
 
 **Security Helpers** (src/server.js:1604-1678)
+
 - `isUnderDir(child, parent)` - Prevents path traversal
 - `looksSafeTarPath(entry)` - Rejects `.., /, C:` patterns
 - `readBodyBuffer(req, maxBytes)` - Enforces size limits
 
 **Enhanced Setup** (src/server.js:1078-1109)
+
 - Telegram plugin auto-enable after config
 - `openclaw doctor --fix` after setup
 - Better error messages with troubleshooting steps
@@ -325,18 +341,21 @@ This avoids repeatedly reading large files and provides instant context about th
 ### Day 6: Custom Providers & Robustness
 
 **Custom Provider Configuration** (src/server.js:756-788)
+
 - Add OpenAI-compatible providers (Ollama, vLLM, etc.)
 - Validation: URL, provider ID, env var names, model
 - `models.mode='merge'` preserves existing providers
 - API keys via env var interpolation (`${VAR}`)
 
 **Status Endpoint Resilience** (src/server.js:642-676)
+
 - 5s timeout on openclaw CLI calls
 - Try-catch around version/help checks
 - Returns 'unknown' on failure (no UI blocking)
 - Frontend fallback if auth groups fail
 
 **Enhanced Error Messages** (src/server.js:Various)
+
 - Gateway failure: actionable troubleshooting
 - Proxy error: references `/healthz`, Debug Console
 - Auth secret: hints about API key field
@@ -345,17 +364,20 @@ This avoids repeatedly reading large files and provides instant context about th
 ### Day 7: Polish, Testing & Documentation
 
 **Improved Error Messages** (src/server.js:1690, 1488, 1721)
+
 - File size errors show human-readable units (MB/KB)
 - Import /data error shows actual paths and env var fix
 - All errors include actionable details
 
 **Security Hardening** (src/server.js:2031, 68, 922, 1981, 2075)
+
 - Credentials directory: 700 permissions (not 755)
 - Token logging: Protected by DEBUG flag
 - Sensitive logs: Use `debug()` helper or `if (DEBUG)`
 - Only logs full tokens when `OPENCLAW_TEMPLATE_DEBUG=true`
 
 **Debug Helper** (src/server.js:51-54)
+
 - `debug()` function only logs when DEBUG=true
 - Used for verbose/sensitive logging
 - Prevents token leaks in production
@@ -365,6 +387,7 @@ This avoids repeatedly reading large files and provides instant context about th
 See `DAY7-TEST-REPORT.md` for comprehensive test results.
 
 Quick smoke test:
+
 ```bash
 # 1. Health check
 curl http://localhost:8080/healthz
