@@ -128,8 +128,8 @@ RUN useradd -m -s /bin/bash openclaw \
   && chown -R openclaw:openclaw /app \
   && mkdir -p /data && chown openclaw:openclaw /data \
   && mkdir -p /home/linuxbrew/.linuxbrew && chown -R openclaw:openclaw /home/linuxbrew \
-  && if [ -d /home/openclaw/.cache/ms-playwright ]; then \
-       chown -R openclaw:openclaw /home/openclaw/.cache/ms-playwright; \
+  && if [ -d /home/openclaw/.cache ]; then \
+       chown -R openclaw:openclaw /home/openclaw/.cache; \
      fi
 
 USER openclaw
