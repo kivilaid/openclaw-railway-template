@@ -106,9 +106,18 @@ COPY --from=openclaw-build /openclaw /openclaw
 RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"' > /usr/local/bin/openclaw \
   && chmod +x /usr/local/bin/openclaw
 
+COPY src ./src
+COPY entrypoint.sh ./entrypoint.sh
+
+# Create openclaw user, set up directories FIRST (before Playwright which needs /home/openclaw)
+RUN useradd -m -s /bin/bash openclaw \
+  && chown -R openclaw:openclaw /app \
+  && mkdir -p /data && chown openclaw:openclaw /data \
+  && mkdir -p /home/linuxbrew/.linuxbrew && chown -R openclaw:openclaw /home/linuxbrew
+
 # Optionally install Chromium + Playwright for browser automation.
 # Set OPENCLAW_INSTALL_BROWSER=1 as a Railway variable to enable (~300MB).
-# Must run after pnpm install so playwright-core is available via openclaw's node_modules.
+# Must run after useradd (needs /home/openclaw) and after pnpm install (needs playwright-core).
 ARG OPENCLAW_INSTALL_BROWSER=""
 RUN if [ -n "$OPENCLAW_INSTALL_BROWSER" ]; then \
       apt-get update && \
@@ -116,21 +125,10 @@ RUN if [ -n "$OPENCLAW_INSTALL_BROWSER" ]; then \
       mkdir -p /home/openclaw/.cache/ms-playwright && \
       PLAYWRIGHT_BROWSERS_PATH=/home/openclaw/.cache/ms-playwright \
       node /openclaw/node_modules/playwright-core/cli.js install --with-deps chromium && \
+      chown -R openclaw:openclaw /home/openclaw/.cache && \
       apt-get clean && \
       rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
     fi
-
-COPY src ./src
-COPY entrypoint.sh ./entrypoint.sh
-
-# Create openclaw user, set up directories, install Homebrew as that user
-RUN useradd -m -s /bin/bash openclaw \
-  && chown -R openclaw:openclaw /app \
-  && mkdir -p /data && chown openclaw:openclaw /data \
-  && mkdir -p /home/linuxbrew/.linuxbrew && chown -R openclaw:openclaw /home/linuxbrew \
-  && if [ -d /home/openclaw/.cache ]; then \
-       chown -R openclaw:openclaw /home/openclaw/.cache; \
-     fi
 
 USER openclaw
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
