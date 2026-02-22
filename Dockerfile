@@ -27,6 +27,11 @@ WORKDIR /openclaw
 #     2. git ls-remote --sort=-v:refname — latest stable tag by version sort
 #     3. main branch (final fallback, with warning — may be unstable)
 # - Can also override locally with --build-arg OPENCLAW_VERSION=<tag>
+# Cache-bust: Docker checks remote ADD URLs at build time. When a new
+# OpenClaw release is published the JSON payload changes, invalidating
+# the layer cache so the git clone below always fetches the latest tag.
+ADD https://api.github.com/repos/openclaw/openclaw/releases/latest /tmp/openclaw-release.json
+
 ARG OPENCLAW_VERSION
 RUN set -eu; \
   if [ -n "${OPENCLAW_VERSION:-}" ]; then \
