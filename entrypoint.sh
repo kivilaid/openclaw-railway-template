@@ -5,6 +5,12 @@ set -e
 chown openclaw:openclaw /data 2>/dev/null || true
 chmod 700 /data 2>/dev/null || true
 
+# Ensure all state files on the volume are owned by the current openclaw user
+# (UID may differ between container rebuilds)
+if [ -d /data/.openclaw ]; then
+  chown -R openclaw:openclaw /data/.openclaw 2>/dev/null || true
+fi
+
 # Persist Homebrew to Railway volume so it survives container rebuilds
 BREW_VOLUME="/data/.linuxbrew"
 BREW_SYSTEM="/home/openclaw/.linuxbrew"
