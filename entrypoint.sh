@@ -25,4 +25,30 @@ else
   fi
 fi
 
+# Persist Playwright browsers to Railway volume so they survive container rebuilds
+PW_VOLUME="/data/.cache/ms-playwright"
+PW_SYSTEM="/home/openclaw/.cache/ms-playwright"
+
+if [ -d "$PW_VOLUME" ] && [ -n "$(ls -A "$PW_VOLUME" 2>/dev/null)" ]; then
+  # Volume already has Playwright browsers — symlink back
+  if [ ! -L "$PW_SYSTEM" ]; then
+    mkdir -p "$(dirname "$PW_SYSTEM")"
+    rm -rf "$PW_SYSTEM"
+    ln -sf "$PW_VOLUME" "$PW_SYSTEM"
+    chown -h openclaw:openclaw "$PW_SYSTEM"
+    echo "[entrypoint] Restored Playwright browsers from volume symlink"
+  fi
+elif [ -d "$PW_SYSTEM" ] && [ ! -L "$PW_SYSTEM" ] && [ -n "$(ls -A "$PW_SYSTEM" 2>/dev/null)" ]; then
+  # First boot with browser installed — move to volume for persistence
+  mkdir -p "$(dirname "$PW_VOLUME")"
+  mv "$PW_SYSTEM" "$PW_VOLUME"
+  ln -sf "$PW_VOLUME" "$PW_SYSTEM"
+  chown -R openclaw:openclaw "$PW_VOLUME"
+  chown -h openclaw:openclaw "$PW_SYSTEM"
+  echo "[entrypoint] Persisted Playwright browsers to volume on first boot"
+fi
+
+# Set Playwright browser path for the runtime
+export PLAYWRIGHT_BROWSERS_PATH="${PW_SYSTEM}"
+
 exec gosu openclaw node src/server.js
