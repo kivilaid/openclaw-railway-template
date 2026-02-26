@@ -89,6 +89,24 @@ Or browse [github.com/openclaw/openclaw/releases](https://github.com/openclaw/op
 
 See **[docs/OPENCLAW-VERSION-CONTROL.md](docs/OPENCLAW-VERSION-CONTROL.md)** for full details.
 
+## `/lite` Management Dashboard
+
+A full-featured web dashboard at `/lite` for managing your OpenClaw instance. Protected by the same `SETUP_PASSWORD` as `/setup`.
+
+**Features:**
+- **Gateway Controls** — Start, stop, restart the gateway with one click
+- **Live Activity Log** — Auto-scrolling, color-coded log viewer (polls every 3s)
+- **Stats Overview** — Skills count, sessions count, version, current model
+- **Token Usage** — 7-day bar chart of input/output token usage (Chart.js)
+- **Memory Browser** — View memory status, full-text search across all memory files
+- **Cron Jobs** — View scheduled tasks
+- **Security Audit** — Run `openclaw doctor` and see pass/warn/fail results
+- **Version & Upgrade** — Check current vs latest version, one-click upgrade
+- **Backup & Restore** — Download full state backup as .tar.gz, restore from upload
+- **Embedded Terminal** — xterm.js bash shell via WebSocket (same auth as setup)
+
+Access it at `https://your-app.up.railway.app/lite`.
+
 ## New Features in This Fork
 
 ### Debug Console 🔧

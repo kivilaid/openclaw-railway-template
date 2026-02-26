@@ -115,20 +115,16 @@ RUN useradd -m -s /bin/bash openclaw \
   && mkdir -p /data && chown openclaw:openclaw /data \
   && mkdir -p /home/linuxbrew/.linuxbrew && chown -R openclaw:openclaw /home/linuxbrew
 
-# Optionally install Chromium + Playwright for browser automation.
-# Set OPENCLAW_INSTALL_BROWSER=1 as a Railway variable to enable (~300MB).
+# Install Chromium + Playwright for browser automation.
 # Must run after useradd (needs /home/openclaw) and after pnpm install (needs playwright-core).
-ARG OPENCLAW_INSTALL_BROWSER=""
-RUN if [ -n "$OPENCLAW_INSTALL_BROWSER" ]; then \
-      apt-get update && \
-      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends xvfb && \
-      mkdir -p /home/openclaw/.cache/ms-playwright && \
-      PLAYWRIGHT_BROWSERS_PATH=/home/openclaw/.cache/ms-playwright \
-      node /openclaw/node_modules/playwright-core/cli.js install --with-deps chromium && \
-      chown -R openclaw:openclaw /home/openclaw/.cache && \
-      apt-get clean && \
-      rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
-    fi
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends xvfb && \
+    mkdir -p /home/openclaw/.cache/ms-playwright && \
+    PLAYWRIGHT_BROWSERS_PATH=/home/openclaw/.cache/ms-playwright \
+    node /openclaw/node_modules/playwright-core/cli.js install --with-deps chromium && \
+    chown -R openclaw:openclaw /home/openclaw/.cache && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 USER openclaw
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
