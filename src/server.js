@@ -1265,6 +1265,15 @@ app.get("/setup/export", requireSetupAuth, async (_req, res) => {
   tar.stdout.pipe(res);
 });
 
+// /canvas — shortcut to the gateway's built-in canvas host
+app.get("/canvas", (req, res) => {
+  res.redirect(307, `/__openclaw__/canvas/${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
+app.get("/canvas/*", (req, res) => {
+  const sub = req.path.slice("/canvas".length);
+  res.redirect(307, `/__openclaw__/canvas${sub}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
+
 // ========== /lite DASHBOARD ==========
 
 // Log buffer for /lite/api/logs — captures gateway stdout/stderr
