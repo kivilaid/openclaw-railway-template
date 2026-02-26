@@ -1274,7 +1274,7 @@ console.error = function (...args) {
   pushLog(args.map(String).join(" "));
 };
 
-app.get("/lite", requireSetupAuth, (_req, res) => {
+app.get("/lite", (_req, res) => {
   res.sendFile(path.join(process.cwd(), "src", "public", "lite.html"));
 });
 
@@ -1525,7 +1525,7 @@ app.get("/lite/api/version", requireSetupAuth, async (_req, res) => {
   // Check latest npm version
   try {
     const r = await runCmd("npm", ["view", "openclaw", "version"]);
-    if (r.code === 0) latest = r.output.trim();
+    if (r.code === 0) latest = r.output.split('\n')[0].trim();
   } catch {}
 
   res.json({ current, latest });

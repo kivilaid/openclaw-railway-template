@@ -260,29 +260,93 @@
   <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    #login-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    #login-overlay.hidden { display: none; }
+    #login-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px; width: 320px; text-align: center;
+    }
+    #login-box h2 { font-size: 18px; margin-bottom: 8px; }
+    #login-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
+    #login-pwd {
+      width: 100%; padding: 9px 12px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); font-size: 14px; margin-bottom: 12px; outline: none;
+    }
+    #login-pwd:focus { border-color: var(--accent); }
+    #login-btn {
+      width: 100%; padding: 9px; background: var(--accent);
+      border: none; border-radius: 6px; color: #000;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    #login-btn:hover { opacity: .85; }
+    #login-error { color: var(--red); font-size: 12px; margin-top: 10px; min-height: 16px; }
+  </style>
+
+  <div id="login-overlay">
+    <div id="login-box">
+      <h2>🔮 OpenClaw Dashboard</h2>
+      <p>Enter your SETUP_PASSWORD to continue</p>
+      <input id="login-pwd" type="password" placeholder="Password" autocomplete="current-password" />
+      <button id="login-btn">Sign in</button>
+      <div id="login-error"></div>
+    </div>
+  </div>
+
   <script>
-    // Auth - extract from URL or prompt
+    // Auth
     const params = new URLSearchParams(location.search);
-    let password = params.get('pwd') || '';
-    
+    let password = params.get('pwd') || sessionStorage.getItem('oc_pwd') || '';
+
     function authHeaders() {
       return { 'Authorization': 'Basic ' + btoa('admin:' + password) };
     }
-    
+
+    let loginResolve = null;
+    function showLogin(errMsg) {
+      document.getElementById('login-overlay').classList.remove('hidden');
+      document.getElementById('login-error').textContent = errMsg || '';
+      document.getElementById('login-pwd').value = '';
+      document.getElementById('login-pwd').focus();
+      return new Promise(r => { loginResolve = r; });
+    }
+    function hideLogin() {
+      document.getElementById('login-overlay').classList.add('hidden');
+    }
+
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const val = document.getElementById('login-pwd').value.trim();
+      if (!val) return;
+      password = val;
+      // Test it
+      const test = await fetch('/lite/api/status', { headers: authHeaders() });
+      if (test.status === 401) {
+        document.getElementById('login-error').textContent = 'Wrong password, try again.';
+        return;
+      }
+      sessionStorage.setItem('oc_pwd', password);
+      hideLogin();
+      if (loginResolve) { loginResolve(); loginResolve = null; }
+    });
+    document.getElementById('login-pwd').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+
     async function apiFetch(url, opts = {}) {
       const headers = { ...authHeaders(), ...(opts.headers || {}) };
       const res = await fetch(url, { ...opts, headers });
       if (res.status === 401) {
-        password = prompt('Enter SETUP_PASSWORD:') || '';
-        if (password) {
-          params.set('pwd', password);
-          history.replaceState(null, '', '?' + params.toString());
-          return apiFetch(url, opts);
-        }
+        await showLogin('Session expired — please sign in again.');
+        return apiFetch(url, opts);
       }
       return res;
     }
-    
+
     async function apiJson(url, opts) {
       const res = await apiFetch(url, opts);
       return res.json();
@@ -646,19 +710,24 @@
       xhr.send();
     });
     
-    // ===== Init =====
-    pollStatus();
-    loadStats();
-    setInterval(pollStatus, 10000);
-    
-    // If no password in URL, prompt
-    if (!password) {
-      password = prompt('Enter SETUP_PASSWORD:') || '';
-      if (password) {
-        params.set('pwd', password);
-        history.replaceState(null, '', '?' + params.toString());
+    // Init auth — show login form if no password cached, else verify silently
+    (async () => {
+      if (!password) {
+        await showLogin();
+      } else {
+        const test = await fetch('/lite/api/status', { headers: authHeaders() });
+        if (test.status === 401) {
+          password = '';
+          sessionStorage.removeItem('oc_pwd');
+          await showLogin('Session expired — please sign in again.');
+        } else {
+          hideLogin();
+        }
       }
-    }
+      pollStatus();
+      loadStats();
+      setInterval(pollStatus, 10000);
+    })();
     
     // Enter key on memory search
     document.getElementById('mem-search-input').addEventListener('keydown', e => {
