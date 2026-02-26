@@ -189,6 +189,25 @@ async function startGateway() {
     console.log(`[gateway] Sync output: ${syncResult.output}`);
   }
 
+  // Allow the Railway public domain (and any custom domain) as a controlUi origin
+  // so the /lite dashboard and proxied Control UI work without "origin not allowed" errors.
+  const publicDomain =
+    process.env.RAILWAY_STATIC_URL ||
+    process.env.RAILWAY_PUBLIC_DOMAIN ||
+    process.env.OPENCLAW_PUBLIC_DOMAIN ||
+    "";
+  const allowedOrigins = ["*"];
+  if (publicDomain) {
+    const withHttps = publicDomain.startsWith("http") ? publicDomain : `https://${publicDomain}`;
+    if (!allowedOrigins.includes(withHttps)) allowedOrigins.push(withHttps);
+  }
+  await runCmd(OPENCLAW_NODE, clawArgs([
+    "config", "set", "--json",
+    "gateway.controlUi.allowedOrigins",
+    JSON.stringify(allowedOrigins),
+  ]));
+  console.log(`[gateway] controlUi.allowedOrigins set to ${JSON.stringify(allowedOrigins)}`);
+
   const args = [
     "gateway",
     "run",
