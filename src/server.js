@@ -1269,7 +1269,7 @@ app.get("/setup/export", requireSetupAuth, async (_req, res) => {
 app.get("/canvas", (req, res) => {
   res.redirect(307, `/__openclaw__/canvas/${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
 });
-app.get("/canvas/*", (req, res) => {
+app.get(/^\/canvas\/(.*)/, (req, res) => {
   const sub = req.path.slice("/canvas".length);
   res.redirect(307, `/__openclaw__/canvas${sub}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
 });
