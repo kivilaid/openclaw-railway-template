@@ -1370,7 +1370,6 @@ const server = app.listen(PORT, () => {
       // Doctor runs after so its gateway health check can actually verify the
       // running instance instead of producing a false "Gateway not running".
       await ensureGatewayRunning();
-      gatewayStartedAt = Date.now();
       try {
         console.log("[wrapper] running openclaw doctor --fix...");
         const dr = await runCmd(OPENCLAW_NODE, clawArgs(["doctor", "--fix"]));
