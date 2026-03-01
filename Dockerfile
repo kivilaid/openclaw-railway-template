@@ -126,6 +126,16 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
+# Chrome wrapper: adds --disable-dev-shm-usage for Railway's small /dev/shm (64MB).
+# Without this flag Chrome crashes immediately with zombie processes because it
+# cannot allocate enough shared memory. The wrapper passes the flag transparently
+# so OpenClaw (and any other caller) can use it as a drop-in Chrome replacement.
+# See: https://github.com/puppeteer/puppeteer/issues/1834
+RUN CHROME_BIN=$(find /home/openclaw/.cache/ms-playwright -name chrome -type f -path "*/chrome-linux64/*" | head -1) && \
+    printf '%s\n' '#!/bin/bash' "exec ${CHROME_BIN} --disable-dev-shm-usage --disable-gpu \"\$@\"" \
+    > /usr/local/bin/chrome-wrapper && \
+    chmod +x /usr/local/bin/chrome-wrapper
+
 USER openclaw
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
