@@ -57,4 +57,22 @@ fi
 # Set Playwright browser path for the runtime
 export PLAYWRIGHT_BROWSERS_PATH="${PW_SYSTEM}"
 
+# Configure OpenClaw to use the chrome-wrapper (adds --disable-dev-shm-usage).
+# Railway containers have a small /dev/shm (64MB) which causes Chrome to crash.
+# The wrapper transparently injects the flag so Chrome uses /tmp instead.
+OC_CONFIG="${OPENCLAW_STATE_DIR:-/data/.openclaw}/openclaw.json"
+if [ -f "$OC_CONFIG" ] && command -v python3 >/dev/null 2>&1; then
+  CURRENT_PATH=$(python3 -c "import json; c=json.load(open('$OC_CONFIG')); print(c.get('browser',{}).get('executablePath',''))" 2>/dev/null || echo "")
+  if [ "$CURRENT_PATH" != "/usr/local/bin/chrome-wrapper" ] && [ -x /usr/local/bin/chrome-wrapper ]; then
+    python3 -c "
+import json
+with open('$OC_CONFIG') as f: c = json.load(f)
+c.setdefault('browser', {})['executablePath'] = '/usr/local/bin/chrome-wrapper'
+c['browser']['headless'] = True
+c['browser']['noSandbox'] = True
+with open('$OC_CONFIG', 'w') as f: json.dump(c, f, indent=2)
+" 2>/dev/null && echo "[entrypoint] Configured browser to use chrome-wrapper (--disable-dev-shm-usage)"
+  fi
+fi
+
 exec gosu openclaw node src/server.js
