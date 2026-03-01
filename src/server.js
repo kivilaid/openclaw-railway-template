@@ -1366,6 +1366,11 @@ const server = app.listen(PORT, () => {
   // work even if nobody visits the web UI.
   if (isConfigured()) {
     (async () => {
+      // Start the gateway first — it auto-runs config migrations on startup.
+      // Doctor runs after so its gateway health check can actually verify the
+      // running instance instead of producing a false "Gateway not running".
+      await ensureGatewayRunning();
+      gatewayStartedAt = Date.now();
       try {
         console.log("[wrapper] running openclaw doctor --fix...");
         const dr = await runCmd(OPENCLAW_NODE, clawArgs(["doctor", "--fix"]));
@@ -1374,7 +1379,7 @@ const server = app.listen(PORT, () => {
       } catch (err) {
         console.warn(`[wrapper] doctor --fix failed: ${err.message}`);
       }
-      await ensureGatewayRunning();
+
     })().catch((err) => {
       console.error(`[wrapper] failed to start gateway at boot: ${err.message}`);
     });
