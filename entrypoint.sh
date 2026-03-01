@@ -75,4 +75,9 @@ with open('$OC_CONFIG', 'w') as f: json.dump(c, f, indent=2)
   fi
 fi
 
+# Ensure pnpm global directories exist on the volume
+mkdir -p /data/pnpm /data/pnpm-store /data/bin 2>/dev/null || true
+chown openclaw:openclaw /data/pnpm /data/pnpm-store /data/bin 2>/dev/null || true
+
+
 exec gosu openclaw node src/server.js
