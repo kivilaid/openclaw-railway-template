@@ -99,6 +99,13 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile && pnpm store prune
 
+# Persist pnpm global installs to the Railway volume (/data).
+# Without this, any `pnpm install -g <pkg>` is lost on redeploy.
+# Agents can install tools (codex, claude-code, etc.) and they survive.
+ENV PNPM_HOME=/data/pnpm
+ENV PNPM_STORE_DIR=/data/pnpm-store
+ENV PATH="/data/pnpm:/data/bin:${PATH}" 
+
 # Copy built openclaw
 COPY --from=openclaw-build /openclaw /openclaw
 
